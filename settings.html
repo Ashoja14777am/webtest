@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Settings</title>
+<style>
+    :root { --bg: #000; --ink: #f4f6fb; --mute: #9aa3b2; --line: #2a2a32; --acc: #ff2a1f; color-scheme: dark; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--bg); color: var(--ink); }
+    body { font-family: 'Barlow Semi Condensed', 'Arial Narrow', Arial, sans-serif; padding: 20px 16px 40px; }
+    main { max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+    header { display: flex; align-items: center; gap: 12px; }
+    h1 { margin: 0; font-size: 26px; font-weight: 600; }
+    a.back, button, select { font: inherit; color: var(--ink); background: var(--bg); border: 1.5px solid var(--line); border-radius: 14px; padding: 10px 16px; cursor: pointer; text-decoration: none; }
+    a.back:focus-visible, button:focus-visible, select:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 14px 0; border-bottom: 1px solid var(--line); }
+    .row p { margin: 0; color: var(--mute); font-size: 14px; }
+    .row strong { display: block; font-size: 18px; font-weight: 500; }
+    #status { min-height: 1.4em; color: var(--mute); font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+    <header>
+        <a class="back" href="index.html" aria-label="Back to dashboard">&larr; Back</a>
+        <h1>Settings</h1>
+    </header>
+
+    <div class="row">
+        <div><strong>Theme</strong><p>Saved on this device (carSettings.theme)</p></div>
+        <select id="theme" aria-label="Theme">
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+            <option value="system">System</option>
+        </select>
+    </div>
+
+    <div class="row">
+        <div><strong>Swipe hint</strong><p>Show the "swipe the car" hint again</p></div>
+        <button id="resetHint" type="button">Show again</button>
+    </div>
+
+    <div class="row">
+        <div><strong>Saved dashboard</strong><p>Go back to the first dashboard</p></div>
+        <button id="resetDashboard" type="button">Reset</button>
+    </div>
+
+    <div id="status" role="status"></div>
+</main>
+
+<script>
+    // Same keys as dashboard.js (CONFIG.storageKey = 'clusterState', theme in 'carSettings')
+    const STATE_KEY = 'clusterState', SETTINGS_KEY = 'carSettings';
+    const read = key => { try { return JSON.parse(localStorage.getItem(key)) || {}; } catch (e) { return {}; } };
+    const write = (key, patch) => { try { localStorage.setItem(key, JSON.stringify({ ...read(key), ...patch })); return true; } catch (e) { return false; } };
+    const status = text => { document.getElementById('status').textContent = text; };
+
+    const theme = document.getElementById('theme');
+    theme.value = read(SETTINGS_KEY).theme || 'dark';
+    theme.addEventListener('change', () => status(write(SETTINGS_KEY, { theme: theme.value }) ? 'Theme saved.' : 'Could not save on this browser.'));
+    document.getElementById('resetHint').addEventListener('click', () => status(write(STATE_KEY, { swipeHintSeen: false }) ? 'The hint will show on the next visit.' : 'Could not save on this browser.'));
+    document.getElementById('resetDashboard').addEventListener('click', () => status(write(STATE_KEY, { dashboard: 0 }) ? 'Dashboard reset.' : 'Could not save on this browser.'));
+</script>
+</body>
+</html>

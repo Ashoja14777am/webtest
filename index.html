@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Digital instrument cluster</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Barlow+Semi+Condensed:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-dashboard="0" data-mode="sport">
+
+<!-- Settings (inline icon, works offline) -->
+<a id="settingsLink" href="settings.html" aria-label="Settings" title="Settings">
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+        <circle cx="12" cy="12" r="3"/>
+    </svg>
+</a>
+
+<!-- Shown in portrait when CONFIG.orientation === 'overlay' -->
+<div id="orientationOverlay" role="alert">
+    <svg viewBox="0 0 64 64" width="64" height="64" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="20" y="8" width="24" height="42" rx="4"/>
+        <path d="M8 40a24 24 0 0 0 14 18M22 58l-2-8 8 2"/>
+    </svg>
+    <p>Please rotate your device to landscape</p>
+</div>
+
+<div id="wrap"><div id="stage">
+<svg id="clusterSvg" viewBox="-70 0 1355 610" role="img" aria-label="Digital instrument cluster">
+
+<!-- ====================== DEFINITIONS ====================== -->
+<defs>
+    <linearGradient id="gradUnderline"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff"/></linearGradient>
+    <radialGradient id="gradFloorGlow"><stop offset="0" stop-color="#5b7fb5" stop-opacity=".45"/><stop offset="1" stop-color="#5b7fb5" stop-opacity="0"/></radialGradient>
+    <linearGradient id="gradChrome" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fdfdfd"/><stop offset=".25" stop-color="#8d9096"/><stop offset=".5" stop-color="#f2f3f5"/><stop offset=".75" stop-color="#6b6e74"/><stop offset="1" stop-color="#e9eaec"/></linearGradient>
+    <!-- gauge faces: black -->
+    <radialGradient id="gradFace" cx=".5" cy=".42" r=".65"><stop offset="0" stop-color="#101113"/><stop offset=".7" stop-color="#050506"/><stop offset="1" stop-color="#000"/></radialGradient>
+    <radialGradient id="gradFerrariFace" cx=".5" cy=".45" r=".55"><stop offset="0" stop-color="#ffd93d"/><stop offset=".7" stop-color="#f4b906"/><stop offset="1" stop-color="#c98a00"/></radialGradient>
+    <radialGradient id="gradFerrariHub" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#4a2f1a"/><stop offset="1" stop-color="#2a190c"/></radialGradient>
+    <linearGradient id="gradM3Bezel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b2d32"/><stop offset=".45" stop-color="#15161a"/><stop offset="1" stop-color="#0a0b0d"/></linearGradient>
+    <linearGradient id="gradM3Lcd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c4cfcb"/><stop offset="1" stop-color="#9aaba6"/></linearGradient>
+    <radialGradient id="gradM3Knob" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#4a4d54"/><stop offset="1" stop-color="#0e0f11"/></radialGradient>
+    <radialGradient id="gradM3Glow"><stop offset="0" stop-color="#2a6cff" stop-opacity=".34"/><stop offset=".6" stop-color="#1c4fd0" stop-opacity=".1"/><stop offset="1" stop-color="#1c4fd0" stop-opacity="0"/></radialGradient>
+    <radialGradient id="gradHub" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff"/><stop offset=".5" stop-color="#b9bcc2"/><stop offset="1" stop-color="#4b4e54"/></radialGradient>
+
+    <!-- warning / status icons (colour comes from --or) -->
+    <g id="ic-fuel"><path class="ic-stroke" d="M-9,12V-11H3V12M-11,12H5M-6,-8H0V-2H-6ZM3,-4H6L9,-1V8A2,2 0 0 0 13,8V-5L9,-9"/></g>
+    <g id="ic-battery"><rect class="ic-stroke" x="-12" y="-7" width="24" height="15" rx="2"/><path class="ic-stroke" d="M-6,-7V-10H-2V-7M2,-7V-10H6V-7M-7,1H-3M5,1H9M7,-1V3"/></g>
+    <g id="ic-temp"><path class="ic-stroke" d="M-3,-14A3,3 0 0 1 3,-14V3A6,6 0 1 1 -3,3ZM6,-9H11M6,-4H11"/></g>
+</defs>
+
+<!-- ====================== DASHBOARD 0 : SUPRA DIGITAL ======================
+     Dials, ticks and arcs are added by dashboard.js (buildSupraDigital) -->
+<g id="dashSupraDigital" class="dashboard">
+
+    <!-- turn signals -->
+    <g class="signal" transform="translate(-45,190)"><rect x="-26" y="-24" width="52" height="48" fill="transparent"/><path class="ic-fill" d="M-18,0L-2,-14V-6H18V6H-2V14Z"/></g>
+    <g class="signal" transform="translate(1260,190) scale(-1,1)"><rect x="-26" y="-24" width="52" height="48" fill="transparent"/><path class="ic-fill" d="M-18,0L-2,-14V-6H18V6H-2V14Z"/></g>
+
+    <!-- speed read-out -->
+    <text id="speedValue" class="num" x="395" y="258" text-anchor="end" font-size="76">0</text>
+    <text class="txt italic" x="404" y="250" font-size="15" font-weight="600">KM/H</text>
+    <rect x="195" y="261" width="250" height="2" fill="url(#gradUnderline)"/>
+    <text class="txt italic dim" x="300" y="424" font-size="17" font-weight="600">KM/H</text>
+    <text class="txt italic dim" x="880" y="424" font-size="17" font-weight="600">1/MIN X1000</text>
+
+    <!-- fuel + temperature scale labels -->
+    <text class="txt italic" x="66" y="334" font-size="16">1</text>
+    <text class="txt italic" x="56" y="392" font-size="15">1/2</text>
+    <text class="txt italic" x="124" y="436" font-size="16" style="fill:#ff2a1f">0</text>
+    <text class="txt italic" x="1141" y="334" font-size="16" style="fill:#ff2a1f">H</text>
+    <text class="txt italic" x="1085" y="436" font-size="16" style="fill:#6fc3ff">C</text>
+
+    <!-- info panel -->
+    <text id="totalValue" class="txt" x="812" y="198" font-size="18">Total 105 km</text>
+    <rect x="808" y="206" width="225" height="1.5" fill="#888" opacity=".6"/>
+    <text class="txt" x="862" y="228" font-size="15">Values Since</text>
+    <text class="txt" x="862" y="253" font-size="19" font-weight="500">Individual</text>
+    <path d="M866,283h14M876,279l4,4-4,4" stroke="#fff" fill="none" stroke-width="1.6"/>
+    <text id="tripValue" class="txt" x="912" y="288" font-size="18">105.4 km</text>
+    <text class="txt" x="866" y="313" font-size="19">Ø</text>
+    <text id="consumptionValue" class="txt" x="912" y="314" font-size="18">22.4 l/100km</text>
+    <circle cx="874" cy="336" r="7" fill="none" stroke="#fff" stroke-width="1.6"/>
+    <text id="avgSpeedValue" class="txt" x="912" y="341" font-size="18">--- km/h</text>
+
+    <!-- bottom row -->
+    <path class="ic-stroke" transform="translate(120,456)" d="M-9,-12H3V12H-9ZM3,-4H8L12,0V8" style="stroke:#fff"/>
+    <text id="rangeValue" class="txt" x="140" y="466" font-size="20">-- km</text>
+    <text id="timeDisplay" class="txt" x="275" y="468" font-size="26">--:--</text>
+
+    <text id="modeLabel" class="txt" x="820" y="462" font-size="18" font-weight="600" style="fill:var(--acc)">SPORT</text>
+    <text id="gearValue" class="num" x="896" y="470" font-size="30">P</text>
+    <text id="temperatureValue" class="txt" x="962" y="468" font-size="25">+--.-°C</text>
+</g>
+
+<!-- ====================== DASHBOARD 1 : SUPRA CLASSIC (built by JS) ====================== -->
+<g id="dashSupraClassic" class="dashboard"></g>
+
+<!-- ====================== DASHBOARD 2 : DODGE CHARGER (built by JS) ====================== -->
+<g id="dashChargerClassic" class="dashboard"></g>
+
+<!-- ====================== DASHBOARD 3 : FERRARI (built by JS) ====================== -->
+<g id="dashFerrari" class="dashboard"></g>
+
+<!-- ====================== DASHBOARD 4 : BMW M3 GTR (built by JS) ====================== -->
+<g id="dashM3" class="dashboard"></g>
+
+<!-- ====================== HUD : battery + error panel (always visible) ====================== -->
+<g id="hud" transform="translate(607,0)">
+    <!-- chips (#escError, #radioError, …) are created from the ERRORS config in dashboard.js -->
+    <g id="errorPanel" transform="translate(0,76)"></g>
+</g>
+
+<!-- ====================== CAR + SWITCHER ====================== -->
+<g id="carAnchor" transform="translate(607,292)"><g id="carGroup">
+    <ellipse cx="0" cy="72" rx="170" ry="22" fill="url(#gradFloorGlow)"/>
+    <image id="carImage-supra" href="img/supra.png" x="-165" y="-81" width="330" height="162"/>
+    <image id="carImage-charger" href="img/charger.png" x="-175" y="-70" width="350" height="140" opacity="0"/>
+    <image id="carImage-m3" href="img/m3gtr.jpg" x="-165" y="-110" width="330" height="220" opacity="0" style="mix-blend-mode:screen"/>
+    <image id="carImage-ferrari" href="img/ferrari.jpg" x="-150" y="-100" width="300" height="200" opacity="0" style="mix-blend-mode:screen"/>
+    <rect x="-200" y="-90" width="400" height="180" fill="transparent"/>
+</g></g>
+
+<g id="carControls">
+    <g class="chevron" id="chevronLeft" transform="translate(418,292)"><rect x="-20" y="-30" width="40" height="60" fill="transparent"/><path d="M6,-16L-8,0L6,16"/></g>
+    <g class="chevron" id="chevronRight" transform="translate(796,292)"><rect x="-20" y="-30" width="40" height="60" fill="transparent"/><path d="M-6,-16L8,0L-6,16"/></g>
+    <text id="carCaption" class="txt" x="607" y="388" text-anchor="middle" font-size="17" font-weight="600" letter-spacing="2" style="fill:var(--mute)">TOYOTA SUPRA</text>
+    <circle id="dot0" cx="567" cy="401" r="3.5" fill="#fff"/>
+    <circle id="dot1" cx="587" cy="401" r="3.5" fill="#fff" opacity=".3"/>
+    <circle id="dot2" cx="607" cy="401" r="3.5" fill="#fff" opacity=".3"/>
+    <circle id="dot3" cx="627" cy="401" r="3.5" fill="#fff" opacity=".3"/>
+    <circle id="dot4" cx="647" cy="401" r="3.5" fill="#fff" opacity=".3"/>
+    <g id="swipeHint" opacity="0">
+        <rect x="462" y="168" width="290" height="38" rx="19" fill="#000" fill-opacity=".6" stroke="#fff" stroke-opacity=".5"/>
+        <text class="txt" x="607" y="188" text-anchor="middle" dominant-baseline="central" font-size="17">‹   Swipe the car to change dashboard   ›</text>
+    </g>
+</g>
+</svg>
+
+</div></div>
+
+<script src="dashboard.js"></script>
+</body>
+</html>
